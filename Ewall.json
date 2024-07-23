@@ -1,0 +1,117 @@
+class WebSecurity {
+    /**
+     * Constructor for the WebSecurity class.
+     *
+     * This class provides methods to protect websites from various types of attacks.
+     */
+    constructor() {
+        /** @private */
+        this.suspiciousPatterns = [
+            /(\bSELECT\b|\bINSERT\b|\bUPDATE\b|\bDELETE\b|\bDROP\b|\bUNION\b|\b--\b|\b;)/i, // SQL I>
+            /(\b(?:GET|POST|PUT|DELETE)\s+.*\s+HTTP\/\d\.\d)/i, // HTTP method patterns
+            /(\b(?:cmd|exec|system|shell|eval|passthru|proc_open|popen|curl|wget)\b)/i // Command in>
+        ];
+    }
+
+    /**
+     * Validates the input against known suspicious patterns.
+     *
+     * @param {string} input - The input string to validate.
+     * @returns {boolean} True if the input is safe, false if it contains suspicious patterns.
+     */
+    validateInput(input) {
+        for (let pattern of this.suspiciousPatterns) {
+            if (pattern.test(input)) {
+                return false; // Input is suspicious
+            }
+        }
+        return true; // Input is safe
+    }
+
+    /**
+     * Simulates a request to the server and checks for potential attacks.
+     *
+     * @param {string} request - The request string to validate.
+     * @returns {string} A message indicating whether the request is safe or blocked.
+     */
+    handleRequest(request) {
+        if (!this.validateInput(request)) {
+            return "Request blocked due to suspicious activity.";
+        }
+        return "Request processed successfully.";
+    }
+
+    /**
+     * Logs the details of blocked requests for further analysis.
+     *
+     * @param {string} request - The blocked request string.
+     */
+    logBlockedRequest(request) {
+        console.error(`Blocked request: ${request}`);
+    }
+}
+/**
+ * Unit Tests for WebSecurity Class
+ */
+
+/**
+ * Testing the input validation method.
+ *
+ * This test verifies that the validateInput method correctly identifies safe and unsafe inputs.
+ */
+describe('Input Validation', () => {
+    const security = new WebSecurity();
+
+    it('Should return true for safe input', () => {
+        assert.strictEqual(security.validateInput("Hello, this is a safe input!"), true);
+    });
+
+    it('Should return false for SQL injection attempt', () => {
+        assert.strictEqual(security.validateInput("SELECT * FROM users;"), false);
+    });
+
+    it('Should return false for command injection attempt', () => {
+        assert.strictEqual(security.validateInput("cmd.exe /c dir"), false);
+    });
+
+    it('Should return false for HTTP method injection', () => {
+        assert.strictEqual(security.validateInput("GET /admin HTTP/1.1"), false);
+    });
+});
+
+/**
+ * Testing the request handling method.
+ *
+ * This test verifies that the handleRequest method correctly processes or blocks requests.
+ */
+describe('Request Handling', () => {
+    const security = new WebSecurity();
+
+    it('Should process safe requests', () => {
+        const response = security.handleRequest("Hello, this is a safe input!");
+        assert.strictEqual(response, "Request processed successfully.");
+    });
+
+    it('Should block suspicious requests', () => {
+        const response = security.handleRequest("SELECT * FROM users;");
+        assert.strictEqual(response, "Request blocked due to suspicious activity.");
+    });
+
+    it('Should log blocked requests', () => {
+        const consoleSpy = sinon.spy(console, 'error');
+        security.logBlockedRequest("SELECT * FROM users;");
+        assert(consoleSpy.calledWith("Blocked request: SELECT * FROM users;"));});
+});
+
+// Example Usage of WebSecurity
+
+const webSecurity = new WebSecurity();
+
+// Simulating a safe request
+console.log(webSecurity.handleRequest("Hello, this is a safe input!"));
+
+// Simulating a SQL injection attempt
+console.log(webSecurity.handleRequest("SELECT * FROM users;"));
+
+// Simulating a command injection attempt
+console.log(webSecurity.handleRequest("cmd.exe /c dir"));
